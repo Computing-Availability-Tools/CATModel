@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CATModel - 可靠性分析工具集</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="hero">
+        <h1>CATModel</h1>
+        <p>集群可靠性建模分析工具集</p>
+    </div>
+
+    <div class="container">
+        <div class="tools-grid">
+            <a href="tools/failure-rate/index.html" class="tool-card">
+                <div class="tool-icon">%</div>
+                <h3>失效率转换工具</h3>
+                <p>PPM、MTBF、FIT 失效率单位的互相转换。支持自定义年运行小时数。</p>
+            </a>
+
+            <a href="tools/availability/index.html" class="tool-card">
+                <div class="tool-icon">A</div>
+                <h3>传统可用度计算</h3>
+                <p>基于 A = MTBF / (MTBF + MTTR) 公式计算系统可用度，提供年停机时间估算。</p>
+            </a>
+
+            <a href="tools/training-availability/index.html" class="tool-card">
+                <div class="tool-icon">T</div>
+                <h3>训练可用度计算</h3>
+                <p>基于检查点容错模型计算训练任务可用度，考虑检查点开销、故障回滚和恢复时间。</p>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
