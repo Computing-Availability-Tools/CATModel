@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>失效率转换 - CATModel</title>
+    <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="../../index.html" class="back-link">&larr; 返回</a>
+            <h1>失效率转换工具</h1>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <h2>输入参数</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="input-value">数值</label>
+                    <input type="number" id="input-value" min="0" step="any" placeholder="输入数值">
+                </div>
+                <div class="form-group">
+                    <label for="input-unit">单位</label>
+                    <select id="input-unit">
+                        <option value="FIT">FIT (每10^9小时故障次数)</option>
+                        <option value="MTBF">MTBF (小时)</option>
+                        <option value="PPM">PPM (年化百万分比)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="hours-per-year">年运行小时数</label>
+                <input type="number" id="hours-per-year" value="8760" min="1" step="1">
+                <div class="hint">默认 8760 h/年 (365天 x 24小时)</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="calculate()">计算</button>
+                <button class="btn btn-secondary" onclick="resetForm()">重置</button>
+            </div>
+            <div class="error-msg" id="error-msg"></div>
+        </div>
+
+        <div class="card" id="result-card" style="display:none">
+            <h2>转换结果</h2>
+            <div class="result-grid">
+                <div class="result-item">
+                    <div class="label">FIT</div>
+                    <div class="value" id="result-fit">-</div>
+                </div>
+                <div class="result-item">
+                    <div class="label">MTBF (小时)</div>
+                    <div class="value" id="result-mtbf">-</div>
+                </div>
+                <div class="result-item">
+                    <div class="label">PPM</div>
+                    <div class="value" id="result-ppm">-</div>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-success" onclick="App.saveCurrentRecord('failure-rate')">保存记录</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>历史记录</h2>
+            <div class="btn-group" style="margin-top:0; margin-bottom:12px">
+                <button class="btn btn-sm btn-secondary" onclick="App.handleExport('failure-rate')">导出</button>
+                <button class="btn btn-sm btn-secondary" onclick="App.handleImport('failure-rate')">导入</button>
+                <button class="btn btn-sm btn-danger" onclick="App.handleClear('failure-rate')">清空</button>
+            </div>
+            <div id="history-list"></div>
+        </div>
+    </div>
+
+    <script src="../../js/calculators.js"></script>
+    <script src="../../js/converters.js"></script>
+    <script src="../../js/storage.js"></script>
+    <script src="../../js/app.js"></script>
+    <script>
+        const TOOL_ID = 'failure-rate';
+        let lastInputs = null;
+        let lastOutputs = null;
+
+        function calculate() {
+            const value = document.getElementById('input-value').value;
+            const unit = document.getElementById('input-unit').value;
+            const hoursPerYear = parseFloat(document.getElementById('hours-per-year').value) || 8760;
+            const errorEl = document.getElementById('error-msg');
+
+            errorEl.classList.remove('show');
+
+            const result = Calculators.convertFailureRate(value, unit, hoursPerYear);
+            if (!result) {
+                errorEl.textContent = '请输入有效的正数';
+                errorEl.classList.add('show');
+                document.getElementById('result-card').style.display = 'none';
+                return;
+            }
+
+            lastInputs = { value: parseFloat(value), unit, hoursPerYear };
+            lastOutputs = result;
+
+            document.getElementById('result-fit').textContent = Converters.formatNumber(result.FIT, 4);
+            document.getElementById('result-mtbf').textContent = Converters.formatNumber(result.MTBF, 2);
+            document.getElementById('result-ppm').textContent = Converters.formatNumber(result.PPM, 6);
+            document.getElementById('result-card').style.display = 'block';
+        }
+
+        function resetForm() {
+            document.getElementById('input-value').value = '';
+            document.getElementById('input-unit').selectedIndex = 0;
+            document.getElementById('hours-per-year').value = '8760';
+            document.getElementById('result-card').style.display = 'none';
+            document.getElementById('error-msg').classList.remove('show');
+            lastInputs = null;
+            lastOutputs = null;
+        }
+
+        document.addEventListener('record-save-request', (e) => {
+            if (e.detail.toolId !== TOOL_ID || !lastInputs) return;
+            const name = prompt('为这次计算命名:', `FIT=${lastInputs.value} 转换`);
+            if (name === null) return;
+            Storage.saveRecord(TOOL_ID, name, lastInputs, lastOutputs);
+            App.renderHistoryList(TOOL_ID);
+            alert('记录已保存');
+        });
+
+        document.addEventListener('record-load', (e) => {
+            if (e.detail.toolId !== TOOL_ID) return;
+            const r = e.detail.record;
+            document.getElementById('input-value').value = r.inputs.value;
+            document.getElementById('input-unit').value = r.inputs.unit;
+            document.getElementById('hours-per-year').value = r.inputs.hoursPerYear;
+            calculate();
+        });
+
+        document.getElementById('input-value').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') calculate();
+        });
+
+        App.renderHistoryList(TOOL_ID);
+    </script>
+</body>
+</html>
